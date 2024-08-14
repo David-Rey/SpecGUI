@@ -126,6 +126,7 @@ classdef Thomson  < handle
 			plot(ax, obj.wavelegthFilteredRight, obj.intensityFilteredRight, 'Color', [0 0 0.9])
 			plot(ax, obj.wavelength, obj.signalIntensityGaussian, 'Color', [1 0 0])
 			plot(ax, obj.gaussianWavelengths, obj.intensityWavelengths, 'k--')
+            xlim(ax, [obj.wavelength(1), obj.wavelength(end)])
             ylim(ax, [min(obj.signalIntensity), max(obj.signalIntensity)])
 		end
 	end
