@@ -102,8 +102,9 @@ classdef RamanSpec < handle
                 for i = 1:2
                     l = lambdaArray(i);  % Wavelength
                     b_J = b_jArray(i);
-                    omega = 1 / (100 * l);
-                    d_sigma_d_omega = (64 * pi^4 * b_J * omega^4 * obj.gammaSquared) / 1E4;
+                    omega = 1 / (100 * l);  % omega [1/cm]
+                    d_sigma_d_omega_cm2 = 64 * pi^4 * b_J * omega^4 * obj.gammaSquared;  % area in units cm^2
+                    d_sigma_d_omega = d_sigma_d_omega_cm2 / 1E4;  % area in units m^2
                     wavelengthJ = wavelength - l;
                     interpolatedIntensity = obj.interpolateIntensity(wavelengthJ + obj.centerInstrumentFunction);
                     intensity = intensity + n_J * obj.wavelengthDelta * obj.environment.power * d_sigma_d_omega * interpolatedIntensity;

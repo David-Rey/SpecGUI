@@ -30,6 +30,13 @@ classdef Thomson  < handle
 
 		area  % area under the curve in nm*counts
 		area_SI  % area under the curve m*counts
+
+        FWHM  % full width at half maximum in nm
+        FWHM_SI  % full width at half maximum in m
+
+        temperature  % temperature of thomson in eV
+
+        drift  % election drift in m/s
 	end
 
 	methods
@@ -108,15 +115,27 @@ classdef Thomson  < handle
             obj.pso.run()
 
             a = obj.pso.globalBest.position(1);
-            mean = obj.pso.globalBest.position(2);
+            mean_nm = obj.pso.globalBest.position(2);
             std = obj.pso.globalBest.position(3);
             offset = obj.pso.globalBest.position(4);
+
+            mean = mean_nm / 1E9;
 			
 			obj.gaussianWavelengths = linspace(obj.wavelength(1), obj.wavelength(end));
-			obj.intensityWavelengths = gaussian(obj.gaussianWavelengths, a, mean, std, offset);
+			obj.intensityWavelengths = gaussian(obj.gaussianWavelengths, a, mean_nm, std, offset);
 			
+            % calculate area / electron density
 			obj.area = a * std * sqrt(2*pi);
 			obj.area_SI = obj.area / 1E9;
+            
+            shift_nm = abs(532 - mean_nm);
+            shift = shift_nm / 1E9;
+            obj.drift = obj.cal_election_drift(shift, mean);
+
+            %obj.FWHM = 2*sqrt(2*log(2)) * std;
+            %obj.FWHM_SI = obj.FWHM / 1E9;
+            obj.temperature = obj.cal_temperature(std / 1E9, mean);
+            obj.saveThomson()
 		end
 		
 		function drawThomson(obj, ax)
@@ -124,11 +143,22 @@ classdef Thomson  < handle
 			hold(ax, "on")
 			plot(ax, obj.wavelegthFilteredLeft, obj.intensityFilteredLeft, 'Color', [0 0 0.9])
 			plot(ax, obj.wavelegthFilteredRight, obj.intensityFilteredRight, 'Color', [0 0 0.9])
-			plot(ax, obj.wavelength, obj.signalIntensityGaussian, 'Color', [1 0 0])
-			plot(ax, obj.gaussianWavelengths, obj.intensityWavelengths, 'k--')
+			%plot(ax, obj.wavelength, obj.signalIntensityGaussian, 'Color', [1 0 0])
+			plot(ax, obj.gaussianWavelengths, obj.intensityWavelengths, 'k-')
             xlim(ax, [obj.wavelength(1), obj.wavelength(end)])
             ylim(ax, [min(obj.signalIntensity), max(obj.signalIntensity)])
-		end
+        end
+
+        function saveThomson(obj)
+            % Define the filename
+            filename = 'ThomsonData.csv';
+            
+            % Combine the wavelength and signal intensity into a matrix
+            data = [obj.wavelength(:), obj.signalIntensity(:)];
+            
+            % Write the matrix to a CSV file
+            writematrix(data, filename);
+        end
 	end
 
 	methods (Static)
@@ -149,6 +179,28 @@ classdef Thomson  < handle
             		localMaxY = [localMaxY, y(i)];
         		end
     		end
-		end
+        end
+
+        function T_e_K = cal_temperature(std, mean)
+            m_e = 9.10938356e-31;  % Electron mass in kg
+            k_B = 1.380649e-23;  % Boltzmann's constant in J/K
+            c = 3e8;  % speed of light
+            theta = 90;  % incident laser wavelength and scattering angle
+            
+            lambda_1e = sqrt(2) * std * 1E9;
+
+            % Calculate electron temperature in K
+            %T_e = (m_e * c^2) / (8 * k_B * sind(theta / 2)^2) * (spectrum_width / mean)^2;
+            T_e = 5238 * lambda_1e^2;
+
+            % Convert temperature from J to eV (1 eV = 1.60218e-19 J)
+            T_e_K = T_e / 11604;
+        end
+
+        function v_d = cal_election_drift(shift, mean)
+            c = 3e8;  % speed of light
+            theta = 90;  % incident laser wavelength and scattering angle
+            v_d = (shift * c) / (2 * mean * sind(theta / 2));
+        end
 	end
 end

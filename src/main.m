@@ -53,10 +53,16 @@ opt.drawLandscape(ax1);
 fig2 = figure();
 ax2 = gca;
 opt.drawOverlay(ax2);
+grid on
+xlabel("Wavelength (nm)")
+ylabel("Intensity (counts)")
 
 fig3 = figure();
 ax3 = gca;
 tom.drawThomson(ax3);
+grid on
+xlabel("Wavelength (nm)")
+ylabel("Intensity (counts)")
 
 electronDensity = tom.area_SI * opt.bestScale;
 fprintf('The electron density is: %.3e\n', electronDensity)

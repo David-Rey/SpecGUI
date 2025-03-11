@@ -5,7 +5,6 @@ classdef ReadSPE < handle
     	filepath
     	wavelength
     	intensity
-	
     	maxIntensity
     	minIntensity
     	maxWavelength
